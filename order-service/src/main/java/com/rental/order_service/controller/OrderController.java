@@ -44,23 +44,9 @@ public class OrderController {
         return ResponseEntity.ok(service.getByMaPhieu(maPhieu));
     }
 
-    @PatchMapping("/{maPhieu}/huy")
-    public ResponseEntity<PhieuThueDto> cancelOrder(@PathVariable String maPhieu) {
-        logger.info("PATCH /api/phieu-thue/{}/huy - Hủy phiếu thuê", maPhieu);
-        PhieuThueDto result = service.cancelOrder(maPhieu);
-        logger.info("Đã hủy phiếu thuê mã={}", maPhieu);
-        return ResponseEntity.ok(result);
-    }
-
     @PatchMapping("/{maPhieu}/dat-coc")
     public ResponseEntity<PhieuThueDto> confirmDatCoc(@PathVariable String maPhieu) {
         logger.info("PATCH /api/phieu-thue/{}/dat-coc - Xác nhận đặt cọc", maPhieu);
         return ResponseEntity.ok(service.confirmDatCoc(maPhieu));
-    }
-
-    @PatchMapping("/{maPhieu}/xac-nhan")
-    public ResponseEntity<PhieuThueDto> confirmOrder(@PathVariable String maPhieu) {
-        logger.info("PATCH /api/phieu-thue/{}/xac-nhan - Xác nhận phiếu thuê", maPhieu);
-        return ResponseEntity.ok(service.confirmOrder(maPhieu));
     }
 }

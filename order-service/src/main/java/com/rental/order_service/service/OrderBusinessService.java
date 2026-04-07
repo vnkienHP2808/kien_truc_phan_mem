@@ -135,40 +135,6 @@ public class OrderBusinessService {
         return toDto(pt);
     }
 
-    // ─────────────────────────── Hủy phiếu thuê ─────────────────────────────
-
-    /**
-     * Hủy phiếu thuê: trả trang phục về AVAILABLE, hoàn cọc nếu đã thanh toán.
-     */
-    public PhieuThueDto cancelOrder(String maPhieu) {
-        logger.info("Hủy phiếu thuê mã={}", maPhieu);
-        PhieuThue pt = repo.findByMaPhieu(maPhieu)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu thuê mã=" + maPhieu));
-
-        if (pt.getTrangThai() == PhieuThueStatus.DA_XAC_NHAN) {
-            throw new RuntimeException("Phiếu thuê đã xác nhận, không thể hủy");
-        }
-
-        pt.setTrangThai(PhieuThueStatus.DA_HUY);
-        if (pt.getTrangThaiDatCoc() == TrangThaiDatCoc.DA_THANH_TOAN) {
-            pt.setTrangThaiDatCoc(TrangThaiDatCoc.DA_HOAN_TRA);
-        }
-
-        pt.getChiTiet().forEach(ct -> {
-            try {
-                restTemplate.patchForObject(
-                        costumeUrl + "/" + ct.getTrangPhucId() + "/trang-thai?trangThai=AVAILABLE",
-                        null, Void.class);
-                logger.info("Đã trả trang phục id={} về AVAILABLE", ct.getTrangPhucId());
-            } catch (Exception e) {
-                logger.warn("Không thể cập nhật trạng thái trang phục id={}: {}", ct.getTrangPhucId(), e.getMessage());
-            }
-        });
-
-        logger.info("Đã hủy phiếu thuê mã={}", maPhieu);
-        return toDto(repo.save(pt));
-    }
-
     // ─────────────────────────── Xác nhận đặt cọc ────────────────────────────
 
     public PhieuThueDto confirmDatCoc(String maPhieu) {
@@ -178,20 +144,6 @@ public class OrderBusinessService {
         pt.setTrangThaiDatCoc(TrangThaiDatCoc.DA_THANH_TOAN);
         pt.setTrangThai(PhieuThueStatus.CHO_XAC_NHAN);
         logger.info("Khách đã thanh toán đặt cọc phiếu thuê mã={}", maPhieu);
-        return toDto(repo.save(pt));
-    }
-
-    // ─────────────────────────── Lễ tân xác nhận ─────────────────────────────
-
-    public PhieuThueDto confirmOrder(String maPhieu) {
-        logger.info("Lễ tân xác nhận phiếu thuê mã={}", maPhieu);
-        PhieuThue pt = repo.findByMaPhieu(maPhieu)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu thuê mã=" + maPhieu));
-        if (pt.getTrangThaiDatCoc() != TrangThaiDatCoc.DA_THANH_TOAN) {
-            throw new RuntimeException("Khách chưa thanh toán đặt cọc");
-        }
-        pt.setTrangThai(PhieuThueStatus.DA_XAC_NHAN);
-        logger.info("Đã xác nhận phiếu thuê mã={}", maPhieu);
         return toDto(repo.save(pt));
     }
 

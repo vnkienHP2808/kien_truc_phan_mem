@@ -69,53 +69,6 @@ public class CostumeBusinessService {
                 .stream().map(this::toResponseDto).collect(Collectors.toList());
     }
 
-    public TrangPhucResponseDto save(TrangPhucRequestDto dto) {
-        logger.info("Tạo trang phục mới: {}", dto.getMaTrangPhuc());
-        TrangPhuc tp = new TrangPhuc(
-                null,
-                dto.getMaTrangPhuc(),
-                dto.getTenTrangPhuc(),
-                dto.getLoaiTrangPhucId(),
-                dto.getKichThuoc(),
-                dto.getMauSac(),
-                dto.getGiaThue(),
-                dto.getGiaGoc(),
-                dto.getTrangThai() != null ? dto.getTrangThai() : TrangPhucStatus.AVAILABLE
-        );
-        TrangPhuc saved = trangPhucRepo.save(tp);
-        logger.info("Đã tạo trang phục id={}, mã={}", saved.getId(), saved.getMaTrangPhuc());
-        return toResponseDto(saved);
-    }
-
-    public TrangPhucResponseDto update(Long id, TrangPhucRequestDto dto) {
-        TrangPhuc tp = trangPhucRepo.findById(id).orElse(null);
-        if (tp == null) {
-            logger.error("Không tìm thấy trang phục để cập nhật id={}", id);
-            return null;
-        }
-        logger.info("Cập nhật trang phục id={}", id);
-        tp.setMaTrangPhuc(dto.getMaTrangPhuc());
-        tp.setTenTrangPhuc(dto.getTenTrangPhuc());
-        tp.setLoaiTrangPhucId(dto.getLoaiTrangPhucId());
-        tp.setKichThuoc(dto.getKichThuoc());
-        tp.setMauSac(dto.getMauSac());
-        tp.setGiaThue(dto.getGiaThue());
-        tp.setGiaGoc(dto.getGiaGoc());
-        if (dto.getTrangThai() != null) tp.setTrangThai(dto.getTrangThai());
-        logger.info("Đã cập nhật trang phục id={}", id);
-        return toResponseDto(trangPhucRepo.save(tp));
-    }
-
-    public boolean delete(Long id) {
-        if (!trangPhucRepo.existsById(id)) {
-            logger.error("Không tìm thấy trang phục để xóa id={}", id);
-            return false;
-        }
-        logger.info("Xóa trang phục id={}", id);
-        trangPhucRepo.deleteById(id);
-        return true;
-    }
-
     /**
      * Cập nhật trạng thái trang phục (AVAILABLE / RENTED / UNAVAILABLE).
      * Endpoint này được order-service gọi khi tạo / hủy phiếu thuê.

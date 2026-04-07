@@ -57,39 +57,6 @@ public class CostumeController {
         return ResponseEntity.ok(dto);
     }
 
-    @PostMapping
-    public ResponseEntity<TrangPhucResponseDto> create(@Valid @RequestBody TrangPhucRequestDto dto) {
-        logger.info("POST /api/trang-phuc - Tạo trang phục: {}", dto.getMaTrangPhuc());
-        TrangPhucResponseDto result = costumeService.save(dto);
-        logger.info("Đã tạo trang phục id={}", result.getId());
-        return ResponseEntity.ok(result);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<TrangPhucResponseDto> update(@PathVariable Long id,
-                                                        @Valid @RequestBody TrangPhucRequestDto dto) {
-        logger.info("PUT /api/trang-phuc/{} - Cập nhật trang phục", id);
-        TrangPhucResponseDto result = costumeService.update(id, dto);
-        if (result == null) {
-            logger.warn("Không tìm thấy trang phục để cập nhật id={}", id);
-            return ResponseEntity.notFound().build();
-        }
-        logger.info("Đã cập nhật trang phục id={}", id);
-        return ResponseEntity.ok(result);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        logger.info("DELETE /api/trang-phuc/{} - Xóa trang phục", id);
-        boolean deleted = costumeService.delete(id);
-        if (!deleted) {
-            logger.warn("Không tìm thấy trang phục để xóa id={}", id);
-            return ResponseEntity.notFound().build();
-        }
-        logger.info("Đã xóa trang phục id={}", id);
-        return ResponseEntity.ok().build();
-    }
-
     /**
      * Cập nhật trạng thái trang phục.
      * Endpoint này được order-service gọi khi xác nhận / hủy phiếu thuê.
