@@ -2,7 +2,7 @@ package com.rental.costume_service.dto;
 
 import com.rental.costume_service.enums.TrangPhucStatus;
 
-public class TrangPhucResponseDto {
+public class TrangPhucDto {
 
     private Long id;
     private String maTrangPhuc;
@@ -12,15 +12,14 @@ public class TrangPhucResponseDto {
     private String kichThuoc;
     private String mauSac;
     private Double giaThue;
-    private Double giaGoc;
     private TrangPhucStatus trangThai;
 
-    public TrangPhucResponseDto() {}
+    public TrangPhucDto() {}
 
-    public TrangPhucResponseDto(Long id, String maTrangPhuc, String tenTrangPhuc,
+    public TrangPhucDto(Long id, String maTrangPhuc, String tenTrangPhuc,
                                 Long loaiTrangPhucId, String tenLoaiTrangPhuc,
                                 String kichThuoc, String mauSac,
-                                Double giaThue, Double giaGoc, TrangPhucStatus trangThai) {
+                                Double giaThue, TrangPhucStatus trangThai) {
         this.id = id;
         this.maTrangPhuc = maTrangPhuc;
         this.tenTrangPhuc = tenTrangPhuc;
@@ -29,7 +28,6 @@ public class TrangPhucResponseDto {
         this.kichThuoc = kichThuoc;
         this.mauSac = mauSac;
         this.giaThue = giaThue;
-        this.giaGoc = giaGoc;
         this.trangThai = trangThai;
     }
 
@@ -56,9 +54,6 @@ public class TrangPhucResponseDto {
 
     public Double getGiaThue() { return giaThue; }
     public void setGiaThue(Double giaThue) { this.giaThue = giaThue; }
-
-    public Double getGiaGoc() { return giaGoc; }
-    public void setGiaGoc(Double giaGoc) { this.giaGoc = giaGoc; }
     
     public TrangPhucStatus getTrangThai() { return trangThai; }
     public void setTrangThai(TrangPhucStatus trangThai) { this.trangThai = trangThai; }

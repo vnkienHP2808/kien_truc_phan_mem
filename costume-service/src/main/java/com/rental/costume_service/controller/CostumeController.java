@@ -1,10 +1,8 @@
 package com.rental.costume_service.controller;
 
-import com.rental.costume_service.dto.TrangPhucRequestDto;
-import com.rental.costume_service.dto.TrangPhucResponseDto;
+import com.rental.costume_service.dto.TrangPhucDto;
 import com.rental.costume_service.enums.TrangPhucStatus;
 import com.rental.costume_service.service.CostumeBusinessService;
-import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -33,23 +31,23 @@ public class CostumeController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TrangPhucResponseDto>> getAll() {
+    public ResponseEntity<List<TrangPhucDto>> getAll() {
         logger.info("GET /api/trang-phuc - Lấy danh sách trang phục");
-        List<TrangPhucResponseDto> result = costumeService.findAll();
+        List<TrangPhucDto> result = costumeService.findAll();
         logger.info("Trả về {} trang phục", result.size());
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/available")
-    public ResponseEntity<List<TrangPhucResponseDto>> getAvailable() {
+    public ResponseEntity<List<TrangPhucDto>> getAvailable() {
         logger.info("GET /api/trang-phuc/available - Lấy trang phục còn hàng");
         return ResponseEntity.ok(costumeService.findAvailable());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TrangPhucResponseDto> getById(@PathVariable Long id) {
+    public ResponseEntity<TrangPhucDto> getById(@PathVariable Long id) {
         logger.info("GET /api/trang-phuc/{} - Lấy chi tiết trang phục", id);
-        TrangPhucResponseDto dto = costumeService.findById(id);
+        TrangPhucDto dto = costumeService.findById(id);
         if (dto == null) {
             logger.warn("Không tìm thấy trang phục id={}", id);
             return ResponseEntity.notFound().build();
@@ -62,10 +60,10 @@ public class CostumeController {
      * Endpoint này được order-service gọi khi xác nhận / hủy phiếu thuê.
      */
     @PatchMapping("/{id}/trang-thai")
-    public ResponseEntity<TrangPhucResponseDto> updateStatus(@PathVariable Long id,
+    public ResponseEntity<TrangPhucDto> updateStatus(@PathVariable Long id,
                                                               @RequestParam TrangPhucStatus trangThai) {
         logger.info("PATCH /api/trang-phuc/{}/trang-thai?trangThai={} - Cập nhật trạng thái", id, trangThai);
-        TrangPhucResponseDto result = costumeService.updateStatus(id, trangThai);
+        TrangPhucDto result = costumeService.updateStatus(id, trangThai);
         if (result == null) {
             logger.warn("Không tìm thấy trang phục id={}", id);
             return ResponseEntity.notFound().build();

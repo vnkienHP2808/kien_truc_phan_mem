@@ -1,7 +1,11 @@
 package com.rental.customer_service.controller;
 
-import com.rental.customer_service.dto.KhachHangDto;
+import com.rental.customer_service.dto.KhachHangResponseDto;
+import com.rental.customer_service.dto.KhachHangRequestDto;
 import com.rental.customer_service.service.KhachHangBusinessService;
+
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -22,17 +26,17 @@ public class KhachHangController {
     }
 
     @GetMapping
-    public ResponseEntity<List<KhachHangDto>> getAll() {
+    public ResponseEntity<List<KhachHangResponseDto>> getAll() {
         logger.info("GET /api/khach-hang - Lấy danh sách khách hàng");
-        List<KhachHangDto> result = service.getAll();
+        List<KhachHangResponseDto> result = service.getAll();
         logger.info("Trả về {} khách hàng", result.size());
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<KhachHangDto> getById(@PathVariable Long id) {
+    public ResponseEntity<KhachHangResponseDto> getById(@PathVariable Long id) {
         logger.info("GET /api/khach-hang/{} - Lấy chi tiết khách hàng", id);
-        KhachHangDto dto = service.getById(id);
+        KhachHangResponseDto dto = service.getById(id);
         if (dto == null) {
             logger.warn("Không tìm thấy khách hàng id={}", id);
             return ResponseEntity.notFound().build();
@@ -40,19 +44,24 @@ public class KhachHangController {
         return ResponseEntity.ok(dto);
     }
 
-    @GetMapping("/username/{username}")
-    public ResponseEntity<KhachHangDto> getByUsername(@PathVariable String username) {
-        logger.info("GET /api/khach-hang/username/{}", username);
-        KhachHangDto dto = service.getByUsername(username);
-        if (dto == null) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(dto);
+    @PostMapping
+    public ResponseEntity<KhachHangResponseDto> create(@Valid @RequestBody KhachHangRequestDto req) {
+        logger.info("POST /api/khach-hang - Yêu cầu tạo mới khách hàng");
+        KhachHangResponseDto result = service.createCustomer(req);
+        return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/ma/{maKhachHang}")
-    public ResponseEntity<KhachHangDto> getByMa(@PathVariable String maKhachHang) {
-        logger.info("GET /api/khach-hang/ma/{}", maKhachHang);
-        KhachHangDto dto = service.getByMaKhachHang(maKhachHang);
-        if (dto == null) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(dto);
+    @PutMapping("/{id}")
+    public ResponseEntity<KhachHangResponseDto> update(@PathVariable Long id, @Valid @RequestBody KhachHangRequestDto req) {
+        logger.info("PUT /api/khach-hang/{} - Yêu cầu cập nhật khách hàng", id);
+        KhachHangResponseDto result = service.updateCustomer(id, req);
+        return ResponseEntity.ok(result);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        logger.info("DELETE /api/khach-hang/{} - Yêu cầu xóa khách hàng", id);
+        service.deleteCustomer(id);
+        return ResponseEntity.ok().build();
     }
 }
