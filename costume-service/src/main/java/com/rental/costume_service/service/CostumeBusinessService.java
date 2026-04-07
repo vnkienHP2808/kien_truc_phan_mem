@@ -78,6 +78,17 @@ public class CostumeBusinessService {
         return toResponseDto(trangPhucRepo.save(tp));
     }
 
+    public List<TrangPhucDto> findByLoaiTrangPhuc(Long loaiId) {
+        logger.info("Lấy danh sách trang phục theo loại id={}", loaiId);
+        
+        return trangPhucRepo.findByLoaiTrangPhucId(loaiId)
+                .stream()
+                // Lọc thêm trang phục đang sẵn sàng
+                .filter(tp -> tp.getTrangThai() == TrangPhucStatus.AVAILABLE)
+                .map(this::toResponseDto)
+                .collect(Collectors.toList());
+    }
+
     // ─────────────────────────── Mapping helper ───────────────────────────────
 
     private TrangPhucDto toResponseDto(TrangPhuc tp) {

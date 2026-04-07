@@ -55,6 +55,14 @@ public class CostumeController {
         return ResponseEntity.ok(dto);
     }
 
+    @GetMapping("/loai/{loaiId}")
+    public ResponseEntity<List<TrangPhucDto>> getByLoai(@PathVariable Long loaiId) {
+        logger.info("GET /api/trang-phuc/loai/{} - Lấy danh sách trang phục theo loại", loaiId);
+        List<TrangPhucDto> result = costumeService.findByLoaiTrangPhuc(loaiId);
+        logger.info("Trả về {} trang phục thuộc loại id={}", result.size(), loaiId);
+        return ResponseEntity.ok(result);
+    }
+
     /**
      * Cập nhật trạng thái trang phục.
      * Endpoint này được order-service gọi khi xác nhận / hủy phiếu thuê.

@@ -1,6 +1,6 @@
 package com.rental.order_service.dto;
 
-public class KhachHangDto {
+public class KhachHangResponseDto {
 
     private Long id;
     private String maKhachHang;
@@ -11,7 +11,7 @@ public class KhachHangDto {
     private String diaChi;
     private String dob;
 
-    public KhachHangDto() {}
+    public KhachHangResponseDto() {}
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

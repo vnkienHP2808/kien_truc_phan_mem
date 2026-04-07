@@ -11,5 +11,4 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, Long> {
 
     Optional<KhachHang> findByUsername(String username);
 
-    Optional<KhachHang> findByMaKhachHang(String maKhachHang);
 }

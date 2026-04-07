@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Refactor: thay FakeTrangPhucRepository (in-memory ArrayList) bằng JpaRepository thực sự.
@@ -14,8 +13,6 @@ import java.util.Optional;
  */
 @Repository
 public interface TrangPhucRepository extends JpaRepository<TrangPhuc, Long> {
-
-    Optional<TrangPhuc> findByMaTrangPhuc(String maTrangPhuc);
 
     List<TrangPhuc> findByTrangThai(TrangPhucStatus trangThai);
 

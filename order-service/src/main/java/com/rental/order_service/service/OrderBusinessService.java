@@ -64,9 +64,9 @@ public class OrderBusinessService {
         // (trong luồng đơn giản hóa: order-service nhận trực tiếp list trang phục ID)
         // Gọi costume-service để lấy thông tin trang phục
         logger.info("Gọi costume-service lấy danh sách trang phục còn hàng");
-        TrangPhucResponseDto[] available;
+        TrangPhucDto[] available;
         try {
-            available = restTemplate.getForObject(costumeUrl + "/available", TrangPhucResponseDto[].class);
+            available = restTemplate.getForObject(costumeUrl + "/available", TrangPhucDto[].class);
         } catch (Exception e) {
             logger.error("Không thể kết nối costume-service: {}", e.getMessage());
             throw new RuntimeException("Không thể kết nối đến costume-service");
@@ -89,7 +89,7 @@ public class OrderBusinessService {
         );
 
         // Thêm tất cả trang phục còn hàng vào phiếu thuê và đổi trạng thái sang RENTED
-        for (TrangPhucResponseDto tp : available) {
+        for (TrangPhucDto tp : available) {
             ChiTietPhieuThue ct = new ChiTietPhieuThue(
                     null, null,
                     tp.getId(), tp.getTenTrangPhuc(),
@@ -152,8 +152,8 @@ public class OrderBusinessService {
     private PhieuThueDto toDto(PhieuThue pt) {
         String tenKhachHang = "";
         try {
-            KhachHangDto kh = restTemplate.getForObject(
-                    customerUrl + "/" + pt.getKhachHangId(), KhachHangDto.class);
+            KhachHangResponseDto kh = restTemplate.getForObject(
+                    customerUrl + "/" + pt.getKhachHangId(), KhachHangResponseDto.class);
             if (kh != null) tenKhachHang = kh.getHoTen();
         } catch (Exception e) {
             logger.warn("Không thể lấy tên khách hàng id={}: {}", pt.getKhachHangId(), e.getMessage());
