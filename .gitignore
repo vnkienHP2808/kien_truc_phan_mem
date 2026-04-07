@@ -1,0 +1,73 @@
+############################
+# Maven
+############################
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+############################
+# Java
+############################
+*.class
+*.log
+*.ctxt
+*.jar
+*.war
+*.ear
+
+############################
+# Spring Boot
+############################
+*.log
+logs/
+*.pid
+*.seed
+
+############################
+# IDE
+############################
+
+# IntelliJ
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# VS Code
+.vscode/
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+############################
+# OS
+############################
+.DS_Store
+Thumbs.db
+
+############################
+# Environment / Config
+############################
+.env
+.env.*
+application-local.yml
+application-dev.yml
+
+############################
+# Docker
+############################
+docker-compose.override.yml
+
+############################
+# Node (nếu có API Gateway dùng Node)
+############################
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+############################
+# Test / Coverage
+############################
+coverage/
