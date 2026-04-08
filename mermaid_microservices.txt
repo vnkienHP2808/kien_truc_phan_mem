@@ -1,0 +1,282 @@
+classDiagram
+    direction LR
+
+    namespace CustomerService {
+        class NguoiDung {
+            <<MappedSuperclass>>
+            #id : Long
+            #hoTen : String
+            #username : String
+            #password : String
+            #email : String
+            #soDienThoai : String
+            #diaChi : String
+            #dob : String
+        }
+        class KhachHang {
+            <<Entity>>
+            -maKhachHang : String
+        }
+        class KhachHangRepository {
+            <<Repository>>
+            +findByUsername(username) Optional~KhachHang~
+        }
+        class KhachHangBusinessService {
+            <<Service>>
+            -repo : KhachHangRepository
+            +getAll() List~KhachHangResponseDto~
+            +getById(id) KhachHangResponseDto
+            +createCustomer(dto) KhachHangResponseDto
+            +updateCustomer(id, dto) KhachHangResponseDto
+            +deleteCustomer(id) void
+        }
+        class KhachHangController {
+            <<Controller>>
+            -service : KhachHangBusinessService
+            +getAll() ResponseEntity
+            +getById(id) ResponseEntity
+            +create(req) ResponseEntity
+            +update(id, req) ResponseEntity
+            +delete(id) ResponseEntity
+        }
+        class KhachHangRequestDto {
+            <<DTO>>
+            +hoTen : String
+            +username : String
+            +password : String
+            +email : String
+            +soDienThoai : String
+            +diaChi : String
+            +dob : String
+        }
+        class KhachHangResponseDto {
+            <<DTO>>
+            +id : Long
+            +maKhachHang : String
+            +hoTen : String
+            +username : String
+            +email : String
+            +soDienThoai : String
+            +diaChi : String
+            +dob : String
+        }
+    }
+
+    NguoiDung <|-- KhachHang
+    KhachHangRepository ..> KhachHang
+    KhachHangBusinessService --> KhachHangRepository
+    KhachHangController --> KhachHangBusinessService
+
+    namespace CostumeService {
+        class LoaiTrangPhuc {
+            <<Entity>>
+            -id : Long
+            -maLoaiTrangPhuc : String
+            -tenLoaiTrangPhuc : String
+            -moTa : String
+        }
+        class TrangPhuc {
+            <<Entity>>
+            -id : Long
+            -maTrangPhuc : String
+            -tenTrangPhuc : String
+            -kichThuoc : String
+            -mauSac : String
+            -giaThue : Double
+            -giaGoc : Double
+            -trangThai : TrangPhucStatus
+        }
+        class TrangPhucStatus {
+            <<Enumeration>>
+            AVAILABLE
+            RENTED
+            UNAVAILABLE
+        }
+        class TrangPhucRepository {
+            <<Repository>>
+            +findByTrangThai(status) List~TrangPhuc~
+            +findByLoaiTrangPhucId(loaiId) List~TrangPhuc~
+        }
+        class LoaiTrangPhucRepository {
+            <<Repository>>
+        }
+        class CostumeBusinessService {
+            <<Service>>
+            -trangPhucRepo : TrangPhucRepository
+            -loaiRepo : LoaiTrangPhucRepository
+            +findAll() List~TrangPhucDto~
+            +findById(id) TrangPhucDto
+            +findAvailable() List~TrangPhucDto~
+            +findByLoaiTrangPhuc(loaiId) List~TrangPhucDto~
+            +updateStatus(id, status) TrangPhucDto
+        }
+        class CostumeController {
+            <<Controller>>
+            -service : CostumeBusinessService
+            +getAll() ResponseEntity
+            +getAvailable() ResponseEntity
+            +getById(id) ResponseEntity
+            +getByLoai(loaiId) ResponseEntity
+            +updateStatus(id, status) ResponseEntity
+        }
+        class TrangPhucDto {
+            <<DTO>>
+            +id : Long
+            +maTrangPhuc : String
+            +tenTrangPhuc : String
+            +loaiTrangPhucId : Long
+            +tenLoaiTrangPhuc : String
+            +kichThuoc : String
+            +mauSac : String
+            +giaThue : Double
+            +trangThai : TrangPhucStatus
+        }
+    }
+
+    TrangPhuc --> TrangPhucStatus
+    LoaiTrangPhuc "1" -- "many" TrangPhuc
+    TrangPhucRepository ..> TrangPhuc
+    LoaiTrangPhucRepository ..> LoaiTrangPhuc
+    CostumeBusinessService --> TrangPhucRepository
+    CostumeBusinessService --> LoaiTrangPhucRepository
+    CostumeController --> CostumeBusinessService
+
+    namespace OrderService {
+        class PhieuThue {
+            <<Entity>>
+            -id : Long
+            -maPhieu : String
+            -khachHangId : Long
+            -ngayTao : LocalDate
+            -ngayHenLay : LocalDate
+            -ngayHenTra : LocalDate
+            -hinhThuc : HinhThucThue
+            -trangThai : PhieuThueStatus
+            -tienDatCoc : Double
+            -trangThaiDatCoc : TrangThaiDatCoc
+        }
+        class ChiTietPhieuThue {
+            <<Entity>>
+            -id : Long
+            -trangPhucId : Long
+            -soLuong : Integer
+            -donGia : Double
+        }
+        class GioHang {
+            <<Entity>>
+            -id : Long
+            -maGioHang : String
+            -khachHangId : Long
+            -ngayTao : LocalDate
+            -ngayCapNhat : LocalDate
+        }
+        class ChiTietGioHang {
+            <<Entity>>
+            -id : Long
+            -gioHangId : Long
+            -trangPhucId : Long
+            -soLuong : Integer
+        }
+        class PhieuThueStatus {
+            <<Enumeration>>
+            CHO_XU_LY
+            CHO_XAC_NHAN
+            DA_XAC_NHAN
+            DA_HUY
+        }
+        class TrangThaiDatCoc {
+            <<Enumeration>>
+            CHUA_THANH_TOAN
+            DA_THANH_TOAN
+            DA_HOAN_TRA
+        }
+        class HinhThucThue {
+            <<Enumeration>>
+            ONLINE
+            TAI_CHO
+        }
+        class PhieuThueRepository {
+            <<Repository>>
+            +findByKhachHangId(khachHangId) List~PhieuThue~
+            +findByMaPhieu(maPhieu) Optional~PhieuThue~
+        }
+        class GioHangRepository {
+            <<Repository>>
+            +findByKhachHangId(khachHangId) Optional~GioHang~
+        }
+        class ChiTietGioHangRepository {
+            <<Repository>>
+            +findByGioHangId(gioHangId) List~ChiTietGioHang~
+            +findByGioHangIdAndTrangPhucId(gioHangId, trangPhucId) Optional~ChiTietGioHang~
+            +existsByGioHangIdAndTrangPhucId(gioHangId, trangPhucId) boolean
+        }
+        class OrderBusinessService {
+            <<Service>>
+            -repo : PhieuThueRepository
+            -gioHangRepo : GioHangRepository
+            -chiTietGioHangRepo : ChiTietGioHangRepository
+            -restTemplate : RestTemplate
+            +addToCart(khachHangId, trangPhucId) void
+            +getCartItems(khachHangId) List~TrangPhucDto~
+            +removeFromCart(khachHangId, trangPhucId) void
+            +createOrder(khachHangId, req) PhieuThueDto
+            +getByKhachHang(khachHangId) List~PhieuThueDto~
+            +getByMaPhieu(maPhieu) PhieuThueDto
+            +confirmDatCoc(maPhieu) PhieuThueDto
+        }
+        class CreateOrderRequest {
+            <<DTO>>
+            +ngayHenLay : LocalDate
+            +ngayHenTra : LocalDate
+        }
+        class OrderController {
+            <<Controller>>
+            -service : OrderBusinessService
+            +addToCart(khachHangId, trangPhucId) ResponseEntity
+            +getCart(khachHangId) ResponseEntity
+            +removeFromCart(khachHangId, trangPhucId) ResponseEntity
+            +create(khachHangId, req) ResponseEntity
+            +getByKhachHang(khachHangId) ResponseEntity
+            +getByMaPhieu(maPhieu) ResponseEntity
+            +confirmDatCoc(maPhieu) ResponseEntity
+        }
+        class KhachHangClient {
+            <<RestTemplate>>
+            -customerUrl : String
+            +getById(id) KhachHangResponseDto
+        }
+        class CostumeClient {
+            <<RestTemplate>>
+            -costumeUrl : String
+            +getAvailable() TrangPhucDto[]
+            +updateStatus(id, status) void
+        }
+    }
+
+    PhieuThue --> PhieuThueStatus
+    PhieuThue --> HinhThucThue
+    PhieuThue --> TrangThaiDatCoc
+    PhieuThue "1" *-- "many" ChiTietPhieuThue
+    GioHang "1" *-- "many" ChiTietGioHang
+    PhieuThueRepository ..> PhieuThue
+    GioHangRepository ..> GioHang
+    ChiTietGioHangRepository ..> ChiTietGioHang
+    OrderBusinessService --> PhieuThueRepository
+    OrderBusinessService --> GioHangRepository
+    OrderBusinessService --> ChiTietGioHangRepository
+    OrderBusinessService --> KhachHangClient
+    OrderBusinessService --> CostumeClient
+    OrderController --> OrderBusinessService
+
+    namespace ApiGateway {
+        class GatewayConfig {
+            <<Configuration>>
+            +customerServiceRoute() RouterFunction
+            +costumeServiceRoute() RouterFunction
+            +orderServiceRoute() RouterFunction
+        }
+    }
+
+    GatewayConfig ..> KhachHangController : /api/khach-hang/** port 8081
+    GatewayConfig ..> CostumeController   : /api/trang-phuc/** port 8082
+    GatewayConfig ..> OrderController     : /api/phieu-thue/** port 8083
