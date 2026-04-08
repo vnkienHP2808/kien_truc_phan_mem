@@ -1,0 +1,32 @@
+sequenceDiagram
+    actor KH as Khách Hàng (Client)
+    participant GW as API Gateway
+    participant CS as Costume Service
+    participant OS as Order Service
+
+    %% Bước 1
+    KH->>GW: Xem trang phục trống
+    GW->>CS: Chuyển tiếp (GET /api/trang-phuc/available)
+    CS-->>KH: Trả về danh sách
+
+    %% Bước 2
+    KH->>GW: Thêm vào giỏ hàng
+    GW->>OS: Chuyển tiếp (POST /api/phieu-thue/gio-hang/...)
+    OS->>CS: RestTemplate: Đồ này còn trống không?
+    CS-->>OS: Trả về trạng thái (AVAILABLE)
+    OS-->>KH: Lưu giỏ hàng thành công
+
+    %% Bước 3
+    KH->>GW: Chốt đơn (Gửi Ngày lấy & Ngày trả)
+    GW->>OS: Chuyển tiếp (POST tạo Phiếu Thuê)
+    OS->>OS: Rút toàn bộ đồ từ Giỏ hàng
+    OS->>CS: RestTemplate: Khóa đồ (Đổi thành RENTED)
+    CS-->>OS: Cập nhật thành công
+    OS->>OS: Tạo Phiếu Thuê, Tính cọc 30%, Xóa Giỏ hàng
+    OS-->>KH: Trả về chi tiết Phiếu Thuê
+
+    %% Bước 4
+    KH->>GW: Thanh toán cọc
+    GW->>OS: Chuyển tiếp (PATCH xác nhận cọc)
+    OS->>OS: Cập nhật trạng thái (Đã thanh toán)
+    OS-->>KH: Giao dịch hoàn tất
