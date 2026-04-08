@@ -17,16 +17,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Refactor OrderServiceImpl + IOrderService → OrderBusinessService.
- *
- * Thay đổi chính theo chuẩn demo_lam_NMH:
- *  1. Bỏ IOrderService interface (1 implementation = không cần interface).
- *  2. Thêm SLF4J Logger ở mọi method quan trọng.
- *  3. FakePhieuThueRepository → PhieuThueRepository (JpaRepository thực).
- *  4. URL các service đọc từ application.yml thay vì hard-code.
- *  5. RestTemplate được inject qua constructor (không tạo mới trong service).
- */
 @Service
 public class OrderBusinessService {
 
@@ -48,21 +38,13 @@ public class OrderBusinessService {
 
     // ─────────────────────────── Tạo phiếu thuê ──────────────────────────────
 
-    /**
-     * Tạo phiếu thuê từ danh sách trang phục được chọn, tự động tính tiền đặt cọc 30%.
-     * Cập nhật trạng thái từng trang phục sang RENTED qua costume-service.
-     */
     public PhieuThueDto createOrder(Long khachHangId, CreateOrderRequest req) {
         logger.info("Tạo phiếu thuê cho khách hàng id={}", khachHangId);
 
-        // Validate ngày hẹn trả phải sau ngày hẹn lấy
         if (!req.getNgayHenTra().isAfter(req.getNgayHenLay())) {
             throw new RuntimeException("Ngày hẹn trả phải sau ngày hẹn lấy");
         }
 
-        // Lấy danh sách trang phục được chọn từ request
-        // (trong luồng đơn giản hóa: order-service nhận trực tiếp list trang phục ID)
-        // Gọi costume-service để lấy thông tin trang phục
         logger.info("Gọi costume-service lấy danh sách trang phục còn hàng");
         TrangPhucDto[] available;
         try {
@@ -92,7 +74,7 @@ public class OrderBusinessService {
         for (TrangPhucDto tp : available) {
             ChiTietPhieuThue ct = new ChiTietPhieuThue(
                     null, null,
-                    tp.getId(), tp.getTenTrangPhuc(),
+                    tp.getId(),
                     1, tp.getGiaThue()
             );
             pt.getChiTiet().add(ct);
@@ -162,7 +144,7 @@ public class OrderBusinessService {
         List<ChiTietPhieuThueDto> chiTiet = pt.getChiTiet().stream()
                 .map(ct -> new ChiTietPhieuThueDto(
                         ct.getId(), ct.getTrangPhucId(),
-                        ct.getTenTrangPhuc(), ct.getSoLuong(), ct.getDonGia()))
+                        ct.getSoLuong(), ct.getDonGia()))
                 .collect(Collectors.toList());
 
         return new PhieuThueDto(
