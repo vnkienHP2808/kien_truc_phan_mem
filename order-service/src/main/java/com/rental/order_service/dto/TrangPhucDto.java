@@ -1,5 +1,7 @@
 package com.rental.order_service.dto;
 
+import com.rental.order_service.enums.TrangPhucStatus; // Import Enum đã tạo
+
 public class TrangPhucDto {
 
     private Long id;
@@ -10,7 +12,7 @@ public class TrangPhucDto {
     private String kichThuoc;
     private String mauSac;
     private Double giaThue;
-    private String trangThai;
+    private TrangPhucStatus trangThai;
 
     public TrangPhucDto() {}
 
@@ -31,13 +33,13 @@ public class TrangPhucDto {
 
     public String getKichThuoc() { return kichThuoc; }
     public void setKichThuoc(String kichThuoc) { this.kichThuoc = kichThuoc; }
-    
+
     public String getMauSac() { return mauSac; }
     public void setMauSac(String mauSac) { this.mauSac = mauSac; }
 
     public Double getGiaThue() { return giaThue; }
     public void setGiaThue(Double giaThue) { this.giaThue = giaThue; }
-    
-    public String getTrangThai() { return trangThai; }
-    public void setTrangThai(String trangThai) { this.trangThai = trangThai; }
+
+    public TrangPhucStatus getTrangThai() { return trangThai; }
+    public void setTrangThai(TrangPhucStatus trangThai) { this.trangThai = trangThai; }
 }

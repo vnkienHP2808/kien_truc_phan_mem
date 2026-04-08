@@ -2,18 +2,25 @@ package com.rental.order_service.service;
 
 import com.rental.order_service.dto.*;
 import com.rental.order_service.entity.ChiTietPhieuThue;
+import com.rental.order_service.entity.ChiTietGioHang;
+import com.rental.order_service.entity.GioHang;
 import com.rental.order_service.entity.PhieuThue;
 import com.rental.order_service.enums.HinhThucThue;
 import com.rental.order_service.enums.PhieuThueStatus;
 import com.rental.order_service.enums.TrangThaiDatCoc;
+import com.rental.order_service.enums.TrangPhucStatus; // <-- ĐÃ THÊM IMPORT ENUM NÀY
+import com.rental.order_service.repository.ChiTietGioHangRepository;
+import com.rental.order_service.repository.GioHangRepository;
 import com.rental.order_service.repository.PhieuThueRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,6 +30,8 @@ public class OrderBusinessService {
     private static final Logger logger = LoggerFactory.getLogger(OrderBusinessService.class);
 
     private final PhieuThueRepository repo;
+    private final GioHangRepository gioHangRepo;
+    private final ChiTietGioHangRepository chiTietGioHangRepo;
     private final RestTemplate restTemplate;
 
     @Value("${service.customer-url}")
@@ -31,63 +40,122 @@ public class OrderBusinessService {
     @Value("${service.costume-url}")
     private String costumeUrl;
 
-    public OrderBusinessService(PhieuThueRepository repo, RestTemplate restTemplate) {
+    public OrderBusinessService(PhieuThueRepository repo, GioHangRepository gioHangRepo, 
+                                ChiTietGioHangRepository chiTietGioHangRepo, RestTemplate restTemplate) {
         this.repo = repo;
+        this.gioHangRepo = gioHangRepo;
+        this.chiTietGioHangRepo = chiTietGioHangRepo;
         this.restTemplate = restTemplate;
+    }
+
+    private GioHang getOrCreateCart(Long khachHangId) {
+        return gioHangRepo.findByKhachHangId(khachHangId).orElseGet(() -> {
+            GioHang newCart = new GioHang(null, "GH-" + khachHangId, khachHangId, LocalDate.now(), LocalDate.now());
+            return gioHangRepo.save(newCart);
+        });
+    }
+
+    @Transactional
+    public void addToCart(Long khachHangId, Long trangPhucId) {
+        GioHang cart = getOrCreateCart(khachHangId);
+
+        if (chiTietGioHangRepo.existsByGioHangIdAndTrangPhucId(cart.getId(), trangPhucId)) {
+            throw new RuntimeException("Trang phục này đã có trong giỏ hàng!");
+        }
+
+        TrangPhucDto tp = restTemplate.getForObject(costumeUrl + "/" + trangPhucId, TrangPhucDto.class);
+        
+        if (tp == null || tp.getTrangThai() != TrangPhucStatus.AVAILABLE) {
+            throw new RuntimeException("Trang phục không tồn tại hoặc đã được người khác thuê!");
+        }
+
+        chiTietGioHangRepo.save(new ChiTietGioHang(null, cart.getId(), trangPhucId, 1));
+        cart.setNgayCapNhat(LocalDate.now());
+        gioHangRepo.save(cart);
+        logger.info("Đã thêm trang phục {} vào giỏ hàng của khách {}", trangPhucId, khachHangId);
+    }
+
+    public List<TrangPhucDto> getCartItems(Long khachHangId) {
+        GioHang cart = getOrCreateCart(khachHangId);
+        List<ChiTietGioHang> items = chiTietGioHangRepo.findByGioHangId(cart.getId());
+        List<TrangPhucDto> result = new ArrayList<>();
+        
+        for (ChiTietGioHang item : items) {
+            try {
+                TrangPhucDto tp = restTemplate.getForObject(costumeUrl + "/" + item.getTrangPhucId(), TrangPhucDto.class);
+                if (tp != null) result.add(tp);
+            } catch (Exception ignored) {}
+        }
+        return result;
+    }
+
+    @Transactional
+    public void removeFromCart(Long khachHangId, Long trangPhucId) {
+        GioHang cart = getOrCreateCart(khachHangId);
+        ChiTietGioHang item = chiTietGioHangRepo.findByGioHangIdAndTrangPhucId(cart.getId(), trangPhucId)
+                .orElseThrow(() -> new RuntimeException("Trang phục không có trong giỏ hàng"));
+        
+        chiTietGioHangRepo.delete(item);
+        cart.setNgayCapNhat(LocalDate.now());
+        gioHangRepo.save(cart);
     }
 
     // ─────────────────────────── Tạo phiếu thuê ──────────────────────────────
 
+    @Transactional
     public PhieuThueDto createOrder(Long khachHangId, CreateOrderRequest req) {
-        logger.info("Tạo phiếu thuê cho khách hàng id={}", khachHangId);
+        logger.info("Tạo phiếu thuê từ giỏ hàng cho khách hàng id={}", khachHangId);
 
         if (!req.getNgayHenTra().isAfter(req.getNgayHenLay())) {
             throw new RuntimeException("Ngày hẹn trả phải sau ngày hẹn lấy");
         }
 
-        logger.info("Gọi costume-service lấy danh sách trang phục còn hàng");
-        TrangPhucDto[] available;
-        try {
-            available = restTemplate.getForObject(costumeUrl + "/available", TrangPhucDto[].class);
-        } catch (Exception e) {
-            logger.error("Không thể kết nối costume-service: {}", e.getMessage());
-            throw new RuntimeException("Không thể kết nối đến costume-service");
-        }
-        if (available == null || available.length == 0) {
-            throw new RuntimeException("Không có trang phục nào còn hàng để tạo phiếu thuê");
+        GioHang cart = getOrCreateCart(khachHangId);
+        List<ChiTietGioHang> cartItems = chiTietGioHangRepo.findByGioHangId(cart.getId());
+        
+        if (cartItems.isEmpty()) {
+            throw new RuntimeException("Giỏ hàng trống! Vui lòng chọn trang phục trước khi thuê.");
         }
 
         PhieuThue pt = new PhieuThue(
-                null,
-                "PT-" + khachHangId + "-" + System.currentTimeMillis(),
-                khachHangId,
-                LocalDate.now(),
-                req.getNgayHenLay(),
-                req.getNgayHenTra(),
-                HinhThucThue.ONLINE,
-                PhieuThueStatus.CHO_XU_LY,
-                0.0,
-                TrangThaiDatCoc.CHUA_THANH_TOAN
+                null, "PT-" + khachHangId + "-" + System.currentTimeMillis(),
+                khachHangId, LocalDate.now(), req.getNgayHenLay(), req.getNgayHenTra(),
+                HinhThucThue.ONLINE, PhieuThueStatus.CHO_XU_LY, 0.0, TrangThaiDatCoc.CHUA_THANH_TOAN
         );
 
-        // Thêm tất cả trang phục còn hàng vào phiếu thuê và đổi trạng thái sang RENTED
-        for (TrangPhucDto tp : available) {
-            ChiTietPhieuThue ct = new ChiTietPhieuThue(
-                    null, null,
-                    tp.getId(),
-                    1, tp.getGiaThue()
-            );
-            pt.getChiTiet().add(ct);
+        // Khởi tạo list rỗng để đảm bảo không bị NullPointerException khi add chi tiết
+        if (pt.getChiTiet() == null) {
+            pt.setChiTiet(new ArrayList<>());
+        }
 
+        int rentedCount = 0;
+
+        for (ChiTietGioHang item : cartItems) {
+            TrangPhucDto tp = null;
             try {
-                restTemplate.patchForObject(
-                        costumeUrl + "/" + tp.getId() + "/trang-thai?trangThai=RENTED",
-                        null, Void.class);
-                logger.info("Đã cập nhật trạng thái trang phục id={} → RENTED", tp.getId());
+                tp = restTemplate.getForObject(costumeUrl + "/" + item.getTrangPhucId(), TrangPhucDto.class);
             } catch (Exception e) {
-                logger.warn("Không thể cập nhật trạng thái trang phục id={}: {}", tp.getId(), e.getMessage());
+                logger.warn("Không thể kiểm tra đồ id={}", item.getTrangPhucId());
+            }
+
+            if (tp != null && tp.getTrangThai() == TrangPhucStatus.AVAILABLE) {
+                ChiTietPhieuThue ct = new ChiTietPhieuThue(null, null, tp.getId(), 1, tp.getGiaThue());
+                pt.getChiTiet().add(ct);
+
+                // Khóa đồ
+                restTemplate.patchForObject(costumeUrl + "/" + tp.getId() + "/trang-thai?trangThai=RENTED", null, Void.class);
+                rentedCount++;
             }
         }
+
+        if (rentedCount == 0) {
+            throw new RuntimeException("Rất tiếc, các trang phục trong giỏ hàng của bạn đều vừa bị người khác thuê mất!");
+        }
+
+        // Xóa sạch giỏ hàng sau khi chốt đơn thành công
+        chiTietGioHangRepo.deleteAll(cartItems);
+        cart.setNgayCapNhat(LocalDate.now());
+        gioHangRepo.save(cart);
 
         double tienCoc = pt.getChiTiet().stream()
                 .mapToDouble(ct -> ct.getDonGia() != null ? ct.getDonGia() : 0)
@@ -95,8 +163,6 @@ public class OrderBusinessService {
         pt.setTienDatCoc(tienCoc);
 
         PhieuThue saved = repo.save(pt);
-        logger.info("Đã tạo phiếu thuê mã={} với {} trang phục, tiền cọc={}",
-                saved.getMaPhieu(), saved.getChiTiet().size(), tienCoc);
         return toDto(saved);
     }
 
