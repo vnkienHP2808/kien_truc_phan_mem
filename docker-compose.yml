@@ -1,4 +1,19 @@
+# ============================================================
+# docker-compose.yml  –  Toàn bộ hệ thống (BE + FE)
+# Chạy: docker compose up -d --build
+#
+# Cổng sau khi chạy:
+#   http://localhost:3000  →  fe_management   (Quản lý khách hàng)
+#   http://localhost:3001  →  order_custome   (Khách đặt trang phục)
+#   http://localhost:8080  →  api-gateway
+#   http://localhost:8761  →  Eureka Dashboard
+# ============================================================
+
 services:
+
+  # ──────────────────────────────────────────────
+  # DATABASE
+  # ──────────────────────────────────────────────
   mysql:
     image: mysql:8.0.44-debian
     container_name: mysql-db
@@ -17,6 +32,9 @@ services:
     networks:
       - microservice-network
 
+  # ──────────────────────────────────────────────
+  # SERVICE REGISTRY
+  # ──────────────────────────────────────────────
   discovery-server:
     build:
       context: ./discovery-server
@@ -36,6 +54,9 @@ services:
     networks:
       - microservice-network
 
+  # ──────────────────────────────────────────────
+  # BACKEND SERVICES
+  # ──────────────────────────────────────────────
   customer-service:
     build:
       context: ./customer-service
@@ -91,6 +112,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: 123456
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      # Override URL service-to-service dùng tên container Docker
       SERVICE_CUSTOMER_URL: http://customer-service:8081/api/khach-hang
       SERVICE_COSTUME_URL: http://costume-service:8082/api/trang-phuc
     depends_on:
@@ -113,6 +135,7 @@ services:
     ports:
       - "8080:8080"
     environment:
+      # Override route URI sang tên container Docker (không phải localhost)
       SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_0_ID: customer-service
       SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_0_URI: http://customer-service:8081
       SPRING_CLOUD_GATEWAY_SERVER_WEBMVC_ROUTES_0_PREDICATES_0: Path=/api/khach-hang/**
@@ -135,6 +158,44 @@ services:
     networks:
       - microservice-network
 
+  # ──────────────────────────────────────────────
+  # FRONTEND SERVICES
+  # ──────────────────────────────────────────────
+
+  # Module 1: Quản lý khách hàng → http://localhost:3000
+  fe-management:
+    build:
+      context: ./fe_management
+      dockerfile: Dockerfile
+      args:
+        # Khi build Docker: FE dùng relative URL "" → nginx proxy /api/ → api-gateway
+        REACT_APP_API_URL: ""
+    container_name: fe-management
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - microservice-network
+    restart: unless-stopped
+
+  # Module 2: Khách đặt trang phục → http://localhost:3001
+  fe-order-custome:
+    build:
+      context: ./order_custome
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: ""
+    container_name: fe-order-custome
+    ports:
+      - "3001:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - microservice-network
+    restart: unless-stopped
+
+# ──────────────────────────────────────────────
 volumes:
   mysql-data:
 
