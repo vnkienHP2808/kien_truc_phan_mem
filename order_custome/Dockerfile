@@ -1,14 +1,10 @@
-# ============================================================
-# order_custome/Dockerfile
-# Module: Khách đặt trang phục online  →  http://localhost:3001
-# ============================================================
-
-# Stage 1: Build React app
 FROM node:18-alpine AS build
 WORKDIR /app
 
-COPY package.json ./
-RUN npm install --legacy-peer-deps
+COPY package*.json ./
+
+RUN npm install --legacy-peer-deps && \
+    npm install ajv@^8 ajv-keywords@^5 --legacy-peer-deps
 
 COPY . .
 
@@ -17,7 +13,6 @@ ENV REACT_APP_API_URL=$REACT_APP_API_URL
 
 RUN npm run build
 
-# Stage 2: Serve bằng nginx
 FROM nginx:1.25-alpine
 WORKDIR /usr/share/nginx/html
 
